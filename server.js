@@ -10,6 +10,11 @@ const pg = require('pg');
 
 // Importar rotas
 const zernioRoutes = require('./routes/zernio');
+const authRoutes = require('./routes/auth');
+const dashboardRoutes = require('./routes/dashboard');
+const automationsRoutes = require('./routes/automations');
+const contactsRoutes = require('./routes/contacts');
+const messagesRoutes = require('./routes/messages');
 
 // Inicializar aplicação Express
 const app = express();
@@ -77,6 +82,21 @@ app.get('/api/health', (req, res) => {
 
 // Rotas da Zernio (integração com WhatsApp)
 app.use('/api', zernioRoutes);
+
+// Rotas de Autenticação
+app.use('/api/auth', authRoutes);
+
+// Rotas de Dashboard
+app.use('/api/dashboard', dashboardRoutes);
+
+// Rotas de Automações
+app.use('/api/automations', automationsRoutes);
+
+// Rotas de Contatos
+app.use('/api/contacts', contactsRoutes);
+
+// Rotas de Mensagens
+app.use('/api/messages', messagesRoutes);
 
 // ============================================
 // TRATAMENTO DE ERROS
