@@ -64,6 +64,9 @@ app.locals.db = pool;
 // MIDDLEWARES
 // ============================================
 
+// Servir arquivos estáticos (Frontend)
+app.use(express.static(path.join(__dirname, 'public')));
+
 // CORS - Middlewares de segurança básicos
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
