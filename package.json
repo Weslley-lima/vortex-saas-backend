@@ -1,0 +1,35 @@
+{
+  "name": "whatsapp-saas-backend",
+  "version": "1.0.0",
+  "description": "Backend Node.js/Express para plataforma WhatsApp SaaS Multi-Instâncias com integração Zernio",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "db:init": "psql -U postgres -f database.sql",
+    "db:reset": "psql -U postgres -d whatsapp_saas_db -f database.sql"
+  },
+  "keywords": [
+    "whatsapp",
+    "saas",
+    "zernio",
+    "express",
+    "postgresql",
+    "multi-tenant"
+  ],
+  "author": "Weslley - Marketing Agency",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "pg": "^8.11.3",
+    "axios": "^1.6.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
