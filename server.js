@@ -21,7 +21,7 @@ const express = require('express');
 const pg = require('pg');
 
 // Importar rotas
-// const zernioRoutes = require('./routes/zernio'); // Comentado - requer axios
+const zernioRoutes = require('./routes/zernio');
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const automationsRoutes = require('./routes/automations');
@@ -101,7 +101,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Rotas da Zernio (integração com WhatsApp)
-// app.use('/api', zernioRoutes); // Comentado - requer axios
+app.use('/api/zernio', zernioRoutes);
 
 // Rotas de Autenticação
 app.use('/api/auth', authRoutes);
