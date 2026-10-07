@@ -3,18 +3,35 @@
 // Descrição: Inicializa o servidor Express com middlewares e rotas
 // ============================================
 
-require('dotenv').config();
+// Load environment variables manually
+const fs = require('fs');
+const path = require('path');
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+        const [key, value] = line.split('=');
+        if (key && !key.startsWith('#') && value) {
+            process.env[key.trim()] = value.trim();
+        }
+    });
+}
+
 const express = require('express');
-const cors = require('cors');
 const pg = require('pg');
 
 // Importar rotas
-const zernioRoutes = require('./routes/zernio');
+// const zernioRoutes = require('./routes/zernio'); // Comentado - requer axios
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const automationsRoutes = require('./routes/automations');
 const contactsRoutes = require('./routes/contacts');
-const messagesRoutes = require('./routes/messages');
+// const messagesRoutes = require('./routes/messages'); // Comentado - requer axios
+const evolutionRoutes = require('./routes/evolution');
+const disparosRoutes = require('./routes/disparos');
+
+// Importar serviços
+const QueueProcessor = require('./services/queue-processor');
 
 // Inicializar aplicação Express
 const app = express();
@@ -47,13 +64,16 @@ app.locals.db = pool;
 // MIDDLEWARES
 // ============================================
 
-// CORS - Permitir requisições do frontend
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// CORS - Middlewares de segurança básicos
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 
 // Body Parser - Parsear JSON
 app.use(express.json());
@@ -81,7 +101,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Rotas da Zernio (integração com WhatsApp)
-app.use('/api', zernioRoutes);
+// app.use('/api', zernioRoutes); // Comentado - requer axios
 
 // Rotas de Autenticação
 app.use('/api/auth', authRoutes);
@@ -96,7 +116,13 @@ app.use('/api/automations', automationsRoutes);
 app.use('/api/contacts', contactsRoutes);
 
 // Rotas de Mensagens
-app.use('/api/messages', messagesRoutes);
+// app.use('/api/messages', messagesRoutes); // Comentado - requer axios
+
+// Rotas da Evolution API (QR Code)
+app.use('/api/evolution', evolutionRoutes);
+
+// Rotas de Disparos em Massa
+app.use('/api/disparos', disparosRoutes);
 
 // ============================================
 // TRATAMENTO DE ERROS
@@ -124,12 +150,17 @@ app.use((err, req, res, next) => {
 // INICIAR SERVIDOR
 // ============================================
 
+// Inicializar Queue Processor para disparos
+const queueProcessor = new QueueProcessor(pool);
+queueProcessor.start(5000); // Processar a cada 5 segundos
+
 app.listen(PORT, () => {
     console.log(`\n╔════════════════════════════════════════╗`);
     console.log(`║  WhatsApp SaaS Backend                ║`);
     console.log(`║  🚀 Servidor rodando em:              ║`);
     console.log(`║  http://localhost:${PORT}                    ║`);
     console.log(`║  Modo: ${process.env.NODE_ENV}                       ║`);
+    console.log(`║  📤 Queue Processor: ATIVO            ║`);
     console.log(`╚════════════════════════════════════════╝\n`);
 });
 
@@ -139,6 +170,7 @@ app.listen(PORT, () => {
 
 process.on('SIGINT', () => {
     console.log('\n\n👋 Encerrando servidor...');
+    queueProcessor.stop();
     pool.end(() => {
         console.log('✅ Conexão com banco de dados fechada.');
         process.exit(0);
